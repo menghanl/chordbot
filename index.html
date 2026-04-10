@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShapeRoll</title>
+<meta name="description" content="Guitar fretboard practice tool — pick chord shapes, roll random note sequences with jianpu notation">
+<meta name="theme-color" content="#4a6fff">
+<meta property="og:title" content="ShapeRoll">
+<meta property="og:description" content="Guitar fretboard practice tool — pick chord shapes, roll random note sequences">
+<meta property="og:type" content="website">
+<meta property="og:image" content="icons/icon-512.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<script>document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');</script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root, [data-theme="light"] {
+  --bg: #f5f5f0;
+  --text: #333;
+  --heading: #111;
+  --btn-bg: #e8e8e0;
+  --btn-border: #ccc;
+  --btn-text: #444;
+  --btn-hover: #ddd;
+  --btn-active-bg: #c8c8f0;
+  --btn-active-border: #6a6aee;
+  --clear-border: #c88;
+  --clear-text: #c44;
+  --clear-hover: #f0dada;
+  --fret-line: #aaa;
+  --string-line: #999;
+  --string-label: #888;
+  --root-col-bg: rgba(100, 100, 255, 0.08);
+  --root-col-border: #999;
+  --dot-text: #777;
+  --dot-hover: rgba(0, 0, 0, 0.06);
+  --input-bg: #fff;
+  --input-border: #ccc;
+  --bar-bg: #e8e8e0;
+  --bar-line: #aaa;
+  --string-ind: #888;
+  --muted: #999;
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a2e;
+  --text: #e0e0e0;
+  --heading: #fff;
+  --btn-bg: #2a2a4a;
+  --btn-border: #444;
+  --btn-text: #ccc;
+  --btn-hover: #3a3a6a;
+  --btn-active-bg: #4a4a8a;
+  --btn-active-border: #7a7aff;
+  --clear-border: #633;
+  --clear-text: #f88;
+  --clear-hover: #4a2a2a;
+  --fret-line: #555;
+  --string-line: #666;
+  --string-label: #666;
+  --root-col-bg: rgba(100, 100, 255, 0.06);
+  --root-col-border: #888;
+  --dot-text: #888;
+  --dot-hover: rgba(255, 255, 255, 0.08);
+  --input-bg: #2a2a4a;
+  --input-border: #444;
+  --bar-bg: #22223a;
+  --bar-line: #555;
+  --string-ind: #888;
+  --muted: #666;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 16px;
+  transition: background 0.2s, color 0.2s;
+}
+
+h1 {
+  text-align: center;
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+  color: var(--heading);
+}
+
+.layout {
+  display: flex;
+  gap: 24px;
+  min-height: calc(100vh - 32px);
+}
+
+.sidebar {
+  flex-shrink: 0;
+  width: 420px;
+  padding: 12px;
+  border-right: 1px solid var(--btn-border);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+}
+
+.main-spacer {
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+  visibility: hidden;
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  padding: 6px 12px;
+  border: 1px solid var(--btn-border);
+  border-radius: 6px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.theme-toggle:hover { background: var(--btn-hover); }
+
+/* --- Presets --- */
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.presets button {
+  padding: 7px 12px;
+  border: 1px solid var(--btn-border);
+  border-radius: 6px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.presets button:hover { background: var(--btn-hover); }
+.presets button.active { background: var(--btn-active-bg); border-color: var(--btn-active-border); color: var(--heading); }
+.presets button.clear { border-color: var(--clear-border); color: var(--clear-text); }
+.presets button.clear:hover { background: var(--clear-hover); }
+
+/* --- Fretboard --- */
+.fretboard-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.fretboard {
+  display: grid;
+  grid-template-columns: 24px repeat(6, 56px);
+  grid-template-rows: repeat(6, 42px);
+}
+
+.fretboard .string-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: var(--string-label);
+}
+
+.fretboard .cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-right: 2px solid var(--fret-line);
+  user-select: none;
+}
+
+.fret-headers {
+  display: grid;
+  grid-template-columns: 24px repeat(6, 56px);
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.fret-headers span {
+  text-align: center;
+  font-size: 0.65rem;
+  color: var(--muted);
+}
+
+.cell::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--string-line);
+  z-index: 0;
+}
+
+.fretboard .row-0 .cell::before { height: 3px; margin-top: -1px; }
+.fretboard .row-1 .cell::before { height: 2.5px; margin-top: -0.75px; }
+.fretboard .row-2 .cell::before { height: 2px; margin-top: -0.5px; }
+
+.cell.root-col {
+  background: var(--root-col-bg);
+  border-left: 2px solid var(--root-col-border);
+}
+
+.cell .dot {
+  width: 32px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 1;
+  color: var(--dot-text);
+  transition: all 0.15s;
+}
+
+.cell .dot .oct { font-size: 0.3rem; line-height: 1; height: 5px; visibility: hidden; }
+.cell.selected .dot .oct { visibility: visible; }
+
+.cell:hover .dot { background: var(--dot-hover); }
+
+.cell.selected .dot {
+  background: #4a6fff;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(74, 111, 255, 0.5);
+}
+
+.cell.selected.iv-1 .dot { background: #e74c3c; }
+.cell.selected.iv-3 .dot { background: #e67e22; }
+.cell.selected.iv-5 .dot { background: #2ecc71; }
+.cell.selected.iv-7 .dot { background: #9b59b6; }
+.cell.selected.iv-2 .dot { background: #3498db; }
+.cell.selected.iv-4 .dot { background: #1abc9c; }
+.cell.selected.iv-6 .dot { background: #f39c12; }
+.cell.selected.iv-b .dot { background: #7f8c8d; }
+
+/* --- Controls --- */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.controls label {
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.controls input[type="number"] {
+  width: 50px;
+  padding: 5px 6px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--heading);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.controls button {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: #4a6fff;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.controls button:hover { background: #3a5fef; }
+.controls button:disabled { background: var(--btn-bg); color: var(--muted); cursor: not-allowed; }
+
+.seed-display {
+  text-align: center;
+  font-size: 0.6rem;
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* --- Output --- */
+.output-header {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.bars-row {
+  display: inline-flex;
+  align-items: stretch;
+  background: var(--bar-bg);
+  border-radius: 6px;
+}
+
+.bar-num {
+  display: flex;
+  align-items: center;
+  font-size: 0.6rem;
+  color: var(--muted);
+  padding-right: 4px;
+  min-width: 20px;
+  justify-content: flex-end;
+}
+
+.bar {
+  display: flex;
+  align-items: stretch;
+  padding: 6px 0;
+  gap: 2px;
+  border-right: 2px solid var(--bar-line);
+}
+
+.bars-row .bar:first-of-type {
+  padding-left: 4px;
+  border-left: 3px solid var(--bar-line);
+}
+
+.bars-row .bar:last-of-type {
+  border-right: 3px solid var(--bar-line);
+  padding-right: 4px;
+}
+
+.note-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  padding: 4px 2px;
+}
+
+.note-cell .octave-dot {
+  font-size: 0.45rem;
+  line-height: 1;
+  height: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.note-cell .interval {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.note-cell .string-ind {
+  font-size: 0.55rem;
+  color: var(--string-ind);
+  margin-top: 1px;
+}
+
+.note-cell.iv-1 .interval, .note-cell.iv-1 .octave-dot { color: #e74c3c; }
+.note-cell.iv-3 .interval, .note-cell.iv-3 .octave-dot { color: #e67e22; }
+.note-cell.iv-5 .interval, .note-cell.iv-5 .octave-dot { color: #2ecc71; }
+.note-cell.iv-7 .interval, .note-cell.iv-7 .octave-dot { color: #9b59b6; }
+.note-cell.iv-2 .interval, .note-cell.iv-2 .octave-dot { color: #3498db; }
+.note-cell.iv-4 .interval, .note-cell.iv-4 .octave-dot { color: #1abc9c; }
+.note-cell.iv-6 .interval, .note-cell.iv-6 .octave-dot { color: #f39c12; }
+.note-cell.iv-b .interval, .note-cell.iv-b .octave-dot { color: #7f8c8d; }
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  .layout { flex-direction: column; gap: 16px; }
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--btn-border);
+    padding-bottom: 16px;
+  }
+  .main-spacer { display: none; }
+}
+
+@media (max-width: 500px) {
+  body { padding: 10px; }
+  h1 { font-size: 1.2rem; margin-bottom: 10px; }
+  .fretboard { grid-template-columns: 20px repeat(6, 44px); grid-template-rows: repeat(6, 36px); }
+  .fret-headers { grid-template-columns: 20px repeat(6, 44px); }
+  .cell .dot { width: 28px; height: 28px; font-size: 0.65rem; }
+  .presets button { padding: 5px 8px; font-size: 0.75rem; }
+  .note-cell { width: 34px; }
+  .note-cell .interval { font-size: 1rem; }
+  .theme-toggle { top: 10px; right: 10px; padding: 4px 8px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle">Light</button>
+
+<div class="layout">
+  <aside class="sidebar">
+    <h1>ShapeRoll</h1>
+
+    <div class="presets" id="presets"></div>
+
+    <div class="fret-headers" id="fret-headers"></div>
+    <div class="fretboard-container">
+      <div class="fretboard" id="fretboard"></div>
+    </div>
+
+    <div class="controls">
+      <label>Bars: <input type="number" id="barCount" value="16" min="1" max="64"></label>
+      <button id="generateBtn">Generate</button>
+    </div>
+    <div class="seed-display" id="seedDisplay"></div>
+  </aside>
+  <main class="main">
+    <div class="main-spacer">ShapeRoll</div>
+    <div class="output-header" id="outputHeader"></div>
+    <div class="bars" id="output"></div>
+  </main>
+</div>
+
+<script>
+// ============================================================
+// DATA MODEL
+// ============================================================
+
+const INTERVAL_NAMES = ['1','b2','2','b3','3','4','b5','5','b6','6','b7','7'];
+const STRING_OFFSETS = [0, 5, 10, 15, 19, 24]; // semitones from root: strings 6..1
+const STRING_LABELS  = ['6','5','4','3','2','1'];
+const NUM_STRINGS = 6;
+const NUM_FRETS = 6;
+const ROOT_COL = 1; // column index where the root sits
+
+// Chord formulas in semitones from root
+const CHORDS = {
+  'Major':  { semitones: [0, 4, 7],         label: 'Major' },
+  'Minor':  { semitones: [0, 3, 7],         label: 'Minor' },
+  'Maj7':   { semitones: [0, 4, 7, 11],     label: 'Maj7' },
+  'Dom7':   { semitones: [0, 4, 7, 10],     label: 'Dom7' },
+  'Min7':   { semitones: [0, 3, 7, 10],     label: 'Min7' },
+  'm7b5':   { semitones: [0, 3, 6, 10],     label: 'm7b5' },
+  'Dim7':   { semitones: [0, 3, 6, 9],      label: 'Dim7' },
+};
+
+// Scale formulas in semitones from root
+const SCALES = {
+  'Major':  { semitones: [0, 2, 4, 5, 7, 9, 11], label: 'Major' },
+  'Minor':  { semitones: [0, 2, 3, 5, 7, 8, 10], label: 'Minor' },
+  'Dorian': { semitones: [0, 2, 3, 5, 7, 9, 10], label: 'Dorian' },
+  'Mixo':   { semitones: [0, 2, 4, 5, 7, 9, 10], label: 'Mixolydian' },
+};
+
+// Hardcoded presets (hand-picked positions for E-shape)
+const PRESETS = {
+  'Major':       [[0,1],[1,3],[2,3],[3,2],[4,1],[5,1]],
+  'Major Arp':   [[0,1],[1,0],[1,3],[2,3],[3,2],[4,1],[5,1]],
+  'Maj7':        [[0,1],[1,3],[2,2],[3,2],[4,1],[5,1]],
+  'Maj7 Arp':    [[0,1],[1,0],[1,3],[2,2],[2,3],[3,2],[4,1],[5,0],[5,1]],
+  'Major Scale': [[0,1],[0,3],[1,0],[1,1],[1,3],[2,0],[2,2],[2,3],[3,0],[3,2],[3,3],[4,1],[4,3],[5,0],[5,1],[5,3]],
+};
+
+// ============================================================
+// FRETBOARD COMPUTATION
+// ============================================================
+
+// Get the semitone (relative to root) at a given grid position
+function semitoneAt(stringIdx, col) {
+  return STRING_OFFSETS[stringIdx] + (col - ROOT_COL);
+}
+
+// Get interval name from semitone
+function intervalName(semitone) {
+  return INTERVAL_NAMES[((semitone % 12) + 12) % 12];
+}
+
+// Find all grid positions where a given set of semitones appear
+function findPositions(semitoneSet) {
+  const positions = [];
+  for (let s = 0; s < NUM_STRINGS; s++) {
+    for (let c = 0; c < NUM_FRETS; c++) {
+      const semi = semitoneAt(s, c);
+      if (semitoneSet.has(((semi % 12) + 12) % 12)) {
+        positions.push([s, c]);
+      }
+    }
+  }
+  return positions;
+}
+
+// Chord voicing: for each string, pick the chord tone used in the E-shape voicing
+// E-shape voicing follows the barre chord pattern
+function chordVoicing(chordSemitones) {
+  const toneSet = new Set(chordSemitones);
+  const positions = [];
+  for (let s = 0; s < NUM_STRINGS; s++) {
+    // For chord voicing, prefer frets closest to the root position
+    // Check frets in the chord box range (ROOT_COL to ROOT_COL+2)
+    let best = null;
+    for (let c = ROOT_COL; c <= ROOT_COL + 2; c++) {
+      if (c >= NUM_FRETS) break;
+      const semi = ((semitoneAt(s, c) % 12) + 12) % 12;
+      if (toneSet.has(semi)) {
+        best = [s, c];
+        break; // prefer lower fret in the voicing range
+      }
+    }
+    if (best) positions.push(best);
+  }
+  return positions;
+}
+
+// Arpeggio: all chord tones in the full position box
+function arpeggioPositions(chordSemitones) {
+  return findPositions(new Set(chordSemitones));
+}
+
+// Scale: all scale tones in the full position box
+function scalePositions(scaleSemitones) {
+  return findPositions(new Set(scaleSemitones));
+}
+
+// Compute positions for a chord+mode selection
+function computePositions(chordName, modeName) {
+  const chord = CHORDS[chordName];
+  if (modeName === 'chord') {
+    return chordVoicing(chord.semitones);
+  } else if (modeName === 'arp') {
+    return arpeggioPositions(chord.semitones);
+  } else if (modeName === 'scale') {
+    const scaleNames = CHORD_SCALES[chordName] || [];
+    if (scaleNames.length === 0) return arpeggioPositions(chord.semitones);
+    return scalePositions(SCALES[scaleNames[0]].semitones);
+  }
+  return [];
+}
+
+// ============================================================
+// INTERVAL COLOR MAPPING
+// ============================================================
+
+function ivClass(name) {
+  const n = name.replace('b', '');
+  if ('1234567'.includes(n) && !name.startsWith('b')) return 'iv-' + n;
+  return 'iv-b';
+}
+
+// ============================================================
+// STATE
+// ============================================================
+
+let selectedNotes = new Set();   // "s-c" keys
+let activePreset = 'Major';
+let currentSeed = parseInt(localStorage.getItem('cb-seed')) || Date.now();
+
+// seeded PRNG (mulberry32)
+function makeRng(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function newSeed() {
+  currentSeed = Date.now();
+  localStorage.setItem('cb-seed', currentSeed);
+}
+
+// ============================================================
+// FRETBOARD VIEW
+// ============================================================
+
+function buildFretHeaders() {
+  const el = document.getElementById('fret-headers');
+  el.innerHTML = '<span></span>';
+  for (let c = 0; c < NUM_FRETS; c++) {
+    const span = document.createElement('span');
+    span.textContent = c === ROOT_COL ? 'R' : '';
+    el.appendChild(span);
+  }
+}
+
+function buildFretboard() {
+  const fb = document.getElementById('fretboard');
+  fb.innerHTML = '';
+  for (let s = NUM_STRINGS - 1; s >= 0; s--) {
+    const label = document.createElement('div');
+    label.className = 'string-label';
+    label.textContent = STRING_LABELS[s];
+    fb.appendChild(label);
+
+    for (let c = 0; c < NUM_FRETS; c++) {
+      const cell = document.createElement('div');
+      const key = s + '-' + c;
+      const interval = intervalName(semitoneAt(s, c));
+
+      cell.className = 'cell row-' + s;
+      if (c === ROOT_COL) cell.classList.add('root-col');
+      cell.dataset.key = key;
+      cell.dataset.interval = interval;
+
+      const semi = semitoneAt(s, c);
+      const dots = Math.floor(semi / 12) - 1;
+
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      const octAbove = document.createElement('span');
+      octAbove.className = 'oct';
+      octAbove.textContent = dots > 0 ? '\u25CF'.repeat(dots) : '';
+      dot.appendChild(octAbove);
+      const ivSpan = document.createElement('span');
+      ivSpan.textContent = interval;
+      dot.appendChild(ivSpan);
+      const octBelow = document.createElement('span');
+      octBelow.className = 'oct';
+      octBelow.textContent = dots < 0 ? '\u25CF'.repeat(-dots) : '';
+      dot.appendChild(octBelow);
+      cell.appendChild(dot);
+
+      cell.addEventListener('click', () => {
+        if (selectedNotes.has(key)) selectedNotes.delete(key);
+        else selectedNotes.add(key);
+        activePreset = null;
+        updateAllUI();
+        generate(false);
+      });
+      fb.appendChild(cell);
+    }
+  }
+}
+
+function updateFretboard() {
+  document.querySelectorAll('.fretboard .cell').forEach(cell => {
+    const key = cell.dataset.key;
+    const interval = cell.dataset.interval;
+    cell.className = cell.className.replace(/ selected| iv-\S+/g, '');
+    if (selectedNotes.has(key)) {
+      cell.classList.add('selected', ivClass(interval));
+    }
+  });
+}
+
+// ============================================================
+// PRESETS UI
+// ============================================================
+
+function buildPresets() {
+  const container = document.getElementById('presets');
+  Object.keys(PRESETS).forEach(name => {
+    const btn = document.createElement('button');
+    btn.textContent = name;
+    btn.dataset.preset = name;
+    btn.addEventListener('click', () => loadPreset(name));
+    container.appendChild(btn);
+  });
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = 'Clear';
+  clearBtn.className = 'clear';
+  clearBtn.addEventListener('click', () => {
+    selectedNotes.clear();
+    activePreset = null;
+    updateAllUI();
+    document.getElementById('output').innerHTML = '';
+    document.getElementById('outputHeader').textContent = '';
+  });
+  container.appendChild(clearBtn);
+}
+
+function loadPreset(name) {
+  selectedNotes.clear();
+  PRESETS[name].forEach(([s, c]) => selectedNotes.add(s + '-' + c));
+  activePreset = name;
+  updateAllUI();
+  generate(false);
+}
+
+function updateAllUI() {
+  updateFretboard();
+  document.querySelectorAll('#presets button[data-preset]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.preset === activePreset);
+  });
+  document.getElementById('generateBtn').disabled = selectedNotes.size === 0;
+}
+
+// ============================================================
+// NOTE POOL & JIANPU
+// ============================================================
+
+function buildNotePool() {
+  const notes = [];
+  selectedNotes.forEach(key => {
+    const [s, c] = key.split('-').map(Number);
+    const semi = semitoneAt(s, c);
+    notes.push({
+      stringIdx: s,
+      col: c,
+      semitone: semi,
+      interval: intervalName(semi),
+      stringLabel: STRING_LABELS[s],
+    });
+  });
+  notes.sort((a, b) => a.semitone - b.semitone);
+
+  // jianpu octave dots: middle octave (semitones 12-23) = no dot, always
+  notes.forEach(n => { n.dots = Math.floor(n.semitone / 12) - 1; });
+
+  return notes;
+}
+
+// ============================================================
+// GENERATOR & RENDERER
+// ============================================================
+
+function generate(rollNew) {
+  const notes = buildNotePool();
+  if (notes.length === 0) return;
+
+  if (rollNew) newSeed();
+  localStorage.setItem('cb-seed', currentSeed);
+  document.getElementById('seedDisplay').textContent = 'seed: ' + currentSeed;
+  localStorage.setItem('cb-preset', activePreset || '');
+  localStorage.setItem('cb-bars', document.getElementById('barCount').value);
+
+  const rng = makeRng(currentSeed);
+  const barCount = parseInt(document.getElementById('barCount').value) || 16;
+  const total = barCount * 4;
+  const sequence = [];
+  for (let i = 0; i < total; i++) {
+    sequence.push(notes[Math.floor(rng() * notes.length)]);
+  }
+
+  // build header
+  let headerText = activePreset || 'Custom';
+  headerText += ' \u2014 ' + barCount + ' bars';
+  document.getElementById('outputHeader').textContent = headerText;
+
+  renderBars(sequence, barCount);
+}
+
+function getBarsPerRow() {
+  const el = document.querySelector('.main');
+  const w = el ? el.clientWidth : window.innerWidth;
+  if (w >= 800) return 4;
+  if (w >= 400) return 2;
+  return 1;
+}
+
+function renderBars(sequence, barCount) {
+  const container = document.getElementById('output');
+  container.innerHTML = '';
+  const barsPerRow = getBarsPerRow();
+
+  for (let b = 0; b < barCount; b++) {
+    if (b % barsPerRow === 0) {
+      var rowEl = document.createElement('div');
+      rowEl.className = 'bars-row';
+      // bar number
+      const num = document.createElement('div');
+      num.className = 'bar-num';
+      num.textContent = b + 1;
+      rowEl.appendChild(num);
+      container.appendChild(rowEl);
+    }
+
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+
+    for (let i = 0; i < 4; i++) {
+      const note = sequence[b * 4 + i];
+      const cell = document.createElement('div');
+      cell.className = 'note-cell ' + ivClass(note.interval);
+
+      const dotAbove = document.createElement('div');
+      dotAbove.className = 'octave-dot';
+      dotAbove.textContent = note.dots > 0 ? '\u25CF'.repeat(note.dots) : '';
+      cell.appendChild(dotAbove);
+
+      const iv = document.createElement('div');
+      iv.className = 'interval';
+      iv.textContent = note.interval;
+      cell.appendChild(iv);
+
+      const dotBelow = document.createElement('div');
+      dotBelow.className = 'octave-dot';
+      dotBelow.textContent = note.dots < 0 ? '\u25CF'.repeat(-note.dots) : '';
+      cell.appendChild(dotBelow);
+
+      const str = document.createElement('div');
+      str.className = 'string-ind';
+      str.textContent = 's' + note.stringLabel;
+      cell.appendChild(str);
+
+      bar.appendChild(cell);
+    }
+    rowEl.appendChild(bar);
+  }
+}
+
+function reLayoutBars() {
+  const container = document.getElementById('output');
+  const allBars = Array.from(container.querySelectorAll('.bar'));
+  if (allBars.length === 0) return;
+
+  const barsPerRow = getBarsPerRow();
+  allBars.forEach(bar => bar.remove());
+  container.innerHTML = '';
+
+  for (let b = 0; b < allBars.length; b++) {
+    if (b % barsPerRow === 0) {
+      var rowEl = document.createElement('div');
+      rowEl.className = 'bars-row';
+      const num = document.createElement('div');
+      num.className = 'bar-num';
+      num.textContent = b + 1;
+      rowEl.appendChild(num);
+      container.appendChild(rowEl);
+    }
+    rowEl.appendChild(allBars[b]);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+buildFretHeaders();
+buildFretboard();
+buildPresets();
+
+// restore state from localStorage, or default to Major
+const savedPreset = localStorage.getItem('cb-preset');
+const savedBars = localStorage.getItem('cb-bars');
+if (savedBars) document.getElementById('barCount').value = savedBars;
+
+if (savedPreset && PRESETS[savedPreset]) {
+  selectedNotes.clear();
+  PRESETS[savedPreset].forEach(([s, c]) => selectedNotes.add(s + '-' + c));
+  activePreset = savedPreset;
+  updateAllUI();
+  generate(false); // same seed = same output
+} else {
+  loadPreset('Major');
+}
+
+document.getElementById('generateBtn').addEventListener('click', () => generate(true));
+window.addEventListener('resize', reLayoutBars);
+
+// --- Theme ---
+const themeBtn = document.getElementById('themeToggle');
+const savedTheme = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
+themeBtn.textContent = savedTheme === 'light' ? 'Dark' : 'Light';
+themeBtn.addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  themeBtn.textContent = next === 'light' ? 'Dark' : 'Light';
+});
+
+// --- Service Worker ---
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js');
+}
+</script>
+
+</body>
+</html>
