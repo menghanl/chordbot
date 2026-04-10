@@ -1,4 +1,4 @@
-# ShapeRoll — Chord Relationship Graph
+# ChordBot — Chord Relationship Graph
 
 ## Chords
 

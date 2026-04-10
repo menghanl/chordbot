@@ -1,4 +1,4 @@
-# ShapeRoll
+# ChordBot
 
 Guitar fretboard practice tool. Pick notes from chord shapes on the fretboard, generate random sequences to practice.
 

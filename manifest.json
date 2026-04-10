@@ -1,6 +1,6 @@
 {
-  "name": "ShapeRoll",
-  "short_name": "ShapeRoll",
+  "name": "ChordBot",
+  "short_name": "ChordBot",
   "description": "Guitar fretboard practice tool — pick chord shapes, roll random note sequences",
   "start_url": "./index.html",
   "display": "standalone",
