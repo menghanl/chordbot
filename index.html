@@ -308,6 +308,15 @@ h1 {
   text-align: center;
 }
 
+.controls select {
+  padding: 5px 6px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--heading);
+  font-size: 0.85rem;
+}
+
 .controls button {
   padding: 8px 18px;
   border: none;
@@ -474,6 +483,10 @@ h1 {
 
       <div class="controls">
         <label>Bars: <input type="number" id="barCount" value="16" min="1" max="64"></label>
+        <select id="genMode">
+          <option value="random">Random</option>
+          <option value="melody">Melody</option>
+        </select>
         <button id="generateBtn">Generate</button>
       </div>
 
@@ -814,6 +827,89 @@ function buildNotePool() {
 // GENERATOR & RENDERER
 // ============================================================
 
+function generateRandom(notes, total, rng) {
+  const sequence = [];
+  for (let i = 0; i < total; i++) {
+    sequence.push(notes[Math.floor(rng() * notes.length)]);
+  }
+  return sequence;
+}
+
+function generateMelody(notes, total, rng) {
+  if (notes.length <= 1) return generateRandom(notes, total, rng);
+
+  // notes are sorted by semitone — build an index for stepwise lookup
+  const sequence = [];
+  let currIdx = Math.floor(rng() * notes.length);
+  let direction = 1; // 1=ascending, -1=descending
+  let consecutiveSteps = 0;
+
+  sequence.push(notes[currIdx]);
+
+  for (let i = 1; i < total; i++) {
+    // weight candidates by distance: closer = much more likely
+    const weights = [];
+    let totalWeight = 0;
+    for (let j = 0; j < notes.length; j++) {
+      const dist = Math.abs(j - currIdx);
+      // stepwise (dist 1) gets weight 10, dist 2 gets 3, dist 3+ gets 1
+      let w;
+      if (dist === 0) w = 2;
+      else if (dist === 1) w = 10;
+      else if (dist === 2) w = 3;
+      else w = 1;
+
+      // after 3+ consecutive steps in same direction, penalize continuing
+      if (consecutiveSteps >= 3) {
+        const wouldContinue = (j - currIdx) * direction > 0;
+        if (wouldContinue) w *= 0.1;
+      }
+
+      // after a leap (dist >= 3), favor opposite direction
+      if (i > 0 && sequence.length >= 2) {
+        const lastDist = Math.abs(
+          notes.indexOf(sequence[i - 1]) - notes.indexOf(sequence[i - 2] || sequence[i - 1])
+        );
+        if (lastDist >= 3) {
+          const prevDir = notes.indexOf(sequence[i - 1]) - notes.indexOf(sequence[i - 2]);
+          if (prevDir !== 0) {
+            const stepDir = j - currIdx;
+            if (stepDir * prevDir < 0) w *= 3; // reward opposite
+            if (stepDir * prevDir > 0) w *= 0.3; // penalize same
+          }
+        }
+      }
+
+      weights.push(w);
+      totalWeight += w;
+    }
+
+    // weighted random pick
+    let r = rng() * totalWeight;
+    let nextIdx = 0;
+    for (let j = 0; j < weights.length; j++) {
+      r -= weights[j];
+      if (r <= 0) { nextIdx = j; break; }
+    }
+
+    // track direction and consecutive steps
+    const step = nextIdx - currIdx;
+    if (step !== 0) {
+      const newDir = step > 0 ? 1 : -1;
+      if (newDir === direction && Math.abs(step) === 1) {
+        consecutiveSteps++;
+      } else {
+        consecutiveSteps = Math.abs(step) === 1 ? 1 : 0;
+        direction = newDir;
+      }
+    }
+
+    currIdx = nextIdx;
+    sequence.push(notes[currIdx]);
+  }
+  return sequence;
+}
+
 function generate(rollNew) {
   const notes = buildNotePool();
   if (notes.length === 0) return;
@@ -827,20 +923,24 @@ function generate(rollNew) {
   const rootFret = Math.floor(rootRng() * 12) + 1;
   const rootNote = NOTE_NAMES[rootFret % 12];
   document.getElementById('rootDisplay').textContent = 'Root: ' + rootNote + '  (fret ' + rootFret + ')';
+
+  const mode = document.getElementById('genMode').value;
   localStorage.setItem('cb-preset', activePreset || '');
   localStorage.setItem('cb-bars', document.getElementById('barCount').value);
+  localStorage.setItem('cb-mode', mode);
 
   const rng = makeRng(currentSeed);
   const barCount = parseInt(document.getElementById('barCount').value) || 16;
   const total = barCount * 4;
-  const sequence = [];
-  for (let i = 0; i < total; i++) {
-    sequence.push(notes[Math.floor(rng() * notes.length)]);
-  }
+
+  const sequence = mode === 'melody'
+    ? generateMelody(notes, total, rng)
+    : generateRandom(notes, total, rng);
 
   // build header
   let headerText = activePreset || 'Custom';
   headerText += ' \u2014 ' + barCount + ' bars';
+  headerText += ' \u2014 ' + (mode === 'melody' ? 'Melody' : 'Random');
   document.getElementById('outputHeader').textContent = headerText;
 
   renderBars(sequence, barCount);
@@ -939,7 +1039,9 @@ buildPresets();
 // restore state from localStorage, or default to Major
 const savedPreset = localStorage.getItem('cb-preset');
 const savedBars = localStorage.getItem('cb-bars');
+const savedMode = localStorage.getItem('cb-mode');
 if (savedBars) document.getElementById('barCount').value = savedBars;
+if (savedMode) document.getElementById('genMode').value = savedMode;
 
 if (savedPreset && PRESETS[savedPreset]) {
   selectedNotes.clear();
