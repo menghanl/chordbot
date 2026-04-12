@@ -104,6 +104,31 @@ h1 {
   border-right: 1px solid var(--btn-border);
 }
 
+.sidebar.collapsed .sidebar-content { display: none; }
+.sidebar.collapsed { width: auto; padding: 0; border: none; }
+
+.sidebar-toggle {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--btn-border);
+  border-radius: 6px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-toggle:hover { background: var(--btn-hover); }
+
 .main {
   flex: 1;
   min-width: 0;
@@ -115,6 +140,8 @@ h1 {
   margin-bottom: 16px;
   visibility: hidden;
 }
+
+.sidebar.collapsed + .main .main-spacer { display: none; }
 
 .theme-toggle {
   position: fixed;
@@ -431,24 +458,27 @@ h1 {
 <button class="theme-toggle" id="themeToggle">Light</button>
 
 <div class="layout">
-  <aside class="sidebar">
-    <h1>ChordBot</h1>
+<button class="sidebar-toggle" id="sidebarToggle">&#9776;</button>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-content">
+      <h1>ChordBot</h1>
 
-    <div class="presets" id="presets"></div>
+      <div class="presets" id="presets"></div>
 
-    <div class="fret-headers" id="fret-headers"></div>
-    <div class="fretboard-container">
-      <div class="fretboard" id="fretboard"></div>
-    </div>
+      <div class="fret-headers" id="fret-headers"></div>
+      <div class="fretboard-container">
+        <div class="fretboard" id="fretboard"></div>
+      </div>
 
-    <div class="controls">
-      <label>Bars: <input type="number" id="barCount" value="16" min="1" max="64"></label>
-      <button id="generateBtn">Generate</button>
-    </div>
+      <div class="controls">
+        <label>Bars: <input type="number" id="barCount" value="16" min="1" max="64"></label>
+        <button id="generateBtn">Generate</button>
+      </div>
 
-    <div class="seed-display" id="seedDisplay"></div>
-    <div class="root-picker">
-      <span class="root-display" id="rootDisplay"></span>
+      <div class="seed-display" id="seedDisplay"></div>
+      <div class="root-picker">
+        <span class="root-display" id="rootDisplay"></span>
+      </div>
     </div>
   </aside>
   <main class="main">
@@ -905,6 +935,19 @@ if (savedPreset && PRESETS[savedPreset]) {
 
 document.getElementById('generateBtn').addEventListener('click', () => generate(true));
 window.addEventListener('resize', reLayoutBars);
+
+// --- Sidebar toggle ---
+const sidebarEl = document.getElementById('sidebar');
+const sidebarBtn = document.getElementById('sidebarToggle');
+if (localStorage.getItem('cb-sidebar') === 'collapsed') {
+  sidebarEl.classList.add('collapsed');
+}
+sidebarBtn.addEventListener('click', () => {
+  sidebarEl.classList.toggle('collapsed');
+  const collapsed = sidebarEl.classList.contains('collapsed');
+  localStorage.setItem('cb-sidebar', collapsed ? 'collapsed' : 'open');
+  reLayoutBars();
+});
 
 // --- Theme ---
 const themeBtn = document.getElementById('themeToggle');
