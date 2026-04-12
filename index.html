@@ -294,6 +294,17 @@ h1 {
 .controls button:hover { background: #3a5fef; }
 .controls button:disabled { background: var(--btn-bg); color: var(--muted); cursor: not-allowed; }
 
+.root-picker {
+  text-align: center;
+  margin-top: 4px;
+}
+
+.root-display {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .seed-display {
   text-align: center;
   font-size: 0.6rem;
@@ -434,7 +445,11 @@ h1 {
       <label>Bars: <input type="number" id="barCount" value="16" min="1" max="64"></label>
       <button id="generateBtn">Generate</button>
     </div>
+
     <div class="seed-display" id="seedDisplay"></div>
+    <div class="root-picker">
+      <span class="root-display" id="rootDisplay"></span>
+    </div>
   </aside>
   <main class="main">
     <div class="main-spacer">ChordBot</div>
@@ -449,6 +464,7 @@ h1 {
 // ============================================================
 
 const INTERVAL_NAMES = ['1','b2','2','b3','3','4','b5','5','b6','6','b7','7'];
+const NOTE_NAMES = ['E','F','F#','G','G#','A','A#','B','C','C#','D','D#'];
 const STRING_OFFSETS = [0, 5, 10, 15, 19, 24]; // semitones from root: strings 6..1
 const STRING_LABELS  = ['6','5','4','3','2','1'];
 const NUM_STRINGS = 6;
@@ -757,6 +773,12 @@ function generate(rollNew) {
   if (rollNew) newSeed();
   localStorage.setItem('cb-seed', currentSeed);
   document.getElementById('seedDisplay').textContent = 'seed: ' + currentSeed;
+
+  // derive root from seed
+  const rootRng = makeRng(currentSeed + 1);
+  const rootFret = Math.floor(rootRng() * 12) + 1;
+  const rootNote = NOTE_NAMES[rootFret % 12];
+  document.getElementById('rootDisplay').textContent = 'Root: ' + rootNote + '  (fret ' + rootFret + ')';
   localStorage.setItem('cb-preset', activePreset || '');
   localStorage.setItem('cb-bars', document.getElementById('barCount').value);
 
