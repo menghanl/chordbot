@@ -478,9 +478,9 @@ const SCALES = {
 const PRESETS = {
   'Major':       [[0,2],[1,4],[2,4],[3,3],[4,2],[5,2]],
   'Major Arp':   [[0,2],[1,1],[1,4],[2,4],[3,3],[4,2],[5,2]],
-  'Maj7':        [[0,2],[1,4],[2,3],[3,3],[4,2],[5,2]],
-  'Maj7 Arp':    [[0,2],[1,1],[1,4],[2,3],[2,4],[3,3],[4,2],[5,1],[5,2]],
-  'Major Scale': [[0,2],[0,4],[1,1],[1,2],[1,4],[2,1],[2,3],[2,4],[3,1],[3,3],[3,4],[4,2],[4,4],[5,1],[5,2],[5,4]],
+  'Maj7 Arp':    [[0,1],[0,2],[1,1],[1,4],[2,3],[2,4],[3,3],[4,2],[5,1],[5,2]],
+  'Maj9 Arp':    [[0,1],[0,2],[0,4],[1,1],[1,4],[2,3],[2,4],[3,1],[3,3],[4,2],[5,1],[5,2],[5,4]],
+  'Major Scale': [[0,1],[0,2],[0,4],[1,1],[1,2],[1,4],[2,1],[2,3],[2,4],[3,1],[3,3],[3,4],[4,2],[4,4],[5,1],[5,2],[5,4]],
 };
 
 // ============================================================
@@ -563,8 +563,10 @@ function computePositions(chordName, modeName) {
 // ============================================================
 
 function ivClass(name) {
-  const n = name.replace('b', '');
-  if ('1234567'.includes(n) && !name.startsWith('b')) return 'iv-' + n;
+  const aliases = {'9':'2','11':'4','13':'6'};
+  const resolved = aliases[name] || name;
+  const n = resolved.replace('b', '');
+  if ('1234567'.includes(n) && !resolved.startsWith('b')) return 'iv-' + n;
   return 'iv-b';
 }
 
@@ -691,9 +693,19 @@ function buildPresets() {
   container.appendChild(clearBtn);
 }
 
+function getPresetPositions(name) {
+  const p = PRESETS[name];
+  return Array.isArray(p) ? p : p.pos;
+}
+
+function getPresetLabels(name) {
+  const p = PRESETS[name];
+  return (p && !Array.isArray(p) && p.labels) || {};
+}
+
 function loadPreset(name) {
   selectedNotes.clear();
-  PRESETS[name].forEach(([s, c]) => selectedNotes.add(s + '-' + c));
+  getPresetPositions(name).forEach(([s, c]) => selectedNotes.add(s + '-' + c));
   activePreset = name;
   updateAllUI();
   generate(false);
@@ -712,15 +724,17 @@ function updateAllUI() {
 // ============================================================
 
 function buildNotePool() {
+  const labels = activePreset ? getPresetLabels(activePreset) : {};
   const notes = [];
   selectedNotes.forEach(key => {
     const [s, c] = key.split('-').map(Number);
     const semi = semitoneAt(s, c);
+    const base = intervalName(semi);
     notes.push({
       stringIdx: s,
       col: c,
       semitone: semi,
-      interval: intervalName(semi),
+      interval: labels[base] || base,
       stringLabel: STRING_LABELS[s],
     });
   });
@@ -859,7 +873,7 @@ if (savedBars) document.getElementById('barCount').value = savedBars;
 
 if (savedPreset && PRESETS[savedPreset]) {
   selectedNotes.clear();
-  PRESETS[savedPreset].forEach(([s, c]) => selectedNotes.add(s + '-' + c));
+  getPresetPositions(savedPreset).forEach(([s, c]) => selectedNotes.add(s + '-' + c));
   activePreset = savedPreset;
   updateAllUI();
   generate(false); // same seed = same output
