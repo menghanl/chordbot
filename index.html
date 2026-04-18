@@ -838,45 +838,33 @@ function generateRandom(notes, total, rng) {
 function generateMelody(notes, total, rng) {
   if (notes.length <= 1) return generateRandom(notes, total, rng);
 
-  // notes are sorted by semitone — build an index for stepwise lookup
   const sequence = [];
   let currIdx = Math.floor(rng() * notes.length);
-  let direction = 1; // 1=ascending, -1=descending
-  let consecutiveSteps = 0;
-
   sequence.push(notes[currIdx]);
 
   for (let i = 1; i < total; i++) {
-    // weight candidates by distance: closer = much more likely
+    const curr = notes[currIdx];
     const weights = [];
     let totalWeight = 0;
+
     for (let j = 0; j < notes.length; j++) {
-      const dist = Math.abs(j - currIdx);
-      // stepwise (dist 1) gets weight 10, dist 2 gets 3, dist 3+ gets 1
+      const semiDist = Math.abs(notes[j].semitone - curr.semitone);
       let w;
-      if (dist === 0) w = 2;
-      else if (dist === 1) w = 10;
-      else if (dist === 2) w = 3;
-      else w = 1;
+      if (semiDist === 0) w = 1;       // same pitch: low weight to avoid repeats
+      else if (semiDist <= 2) w = 10;   // half/whole step
+      else if (semiDist <= 4) w = 7;    // minor/major 3rd
+      else if (semiDist <= 5) w = 4;    // perfect 4th
+      else if (semiDist <= 7) w = 2;    // up to perfect 5th
+      else w = 0.1;                     // beyond a 5th: near-zero
 
-      // after 3+ consecutive steps in same direction, penalize continuing
-      if (consecutiveSteps >= 3) {
-        const wouldContinue = (j - currIdx) * direction > 0;
-        if (wouldContinue) w *= 0.1;
-      }
+      // penalize repeating the same note we just played
+      if (j === currIdx) w *= 0.3;
 
-      // after a leap (dist >= 3), favor opposite direction
-      if (i > 0 && sequence.length >= 2) {
-        const lastDist = Math.abs(
-          notes.indexOf(sequence[i - 1]) - notes.indexOf(sequence[i - 2] || sequence[i - 1])
-        );
-        if (lastDist >= 3) {
-          const prevDir = notes.indexOf(sequence[i - 1]) - notes.indexOf(sequence[i - 2]);
-          if (prevDir !== 0) {
-            const stepDir = j - currIdx;
-            if (stepDir * prevDir < 0) w *= 3; // reward opposite
-            if (stepDir * prevDir > 0) w *= 0.3; // penalize same
-          }
+      // penalize A-B-A bounce
+      if (sequence.length >= 2) {
+        const prev2 = sequence[sequence.length - 2];
+        if (notes[j].stringIdx === prev2.stringIdx && notes[j].col === prev2.col) {
+          w *= 0.2;
         }
       }
 
@@ -890,18 +878,6 @@ function generateMelody(notes, total, rng) {
     for (let j = 0; j < weights.length; j++) {
       r -= weights[j];
       if (r <= 0) { nextIdx = j; break; }
-    }
-
-    // track direction and consecutive steps
-    const step = nextIdx - currIdx;
-    if (step !== 0) {
-      const newDir = step > 0 ? 1 : -1;
-      if (newDir === direction && Math.abs(step) === 1) {
-        consecutiveSteps++;
-      } else {
-        consecutiveSteps = Math.abs(step) === 1 ? 1 : 0;
-        direction = newDir;
-      }
     }
 
     currIdx = nextIdx;
