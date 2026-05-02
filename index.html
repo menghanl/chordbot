@@ -276,13 +276,18 @@ h1 {
 }
 
 .cell.selected.iv-1 .dot { background: #e74c3c; }
-.cell.selected.iv-3 .dot { background: #e67e22; }
-.cell.selected.iv-5 .dot { background: #2ecc71; }
-.cell.selected.iv-7 .dot { background: #9b59b6; }
 .cell.selected.iv-2 .dot { background: #3498db; }
+.cell.selected.iv-3 .dot { background: #e67e22; }
 .cell.selected.iv-4 .dot { background: #1abc9c; }
+.cell.selected.iv-5 .dot { background: #2ecc71; }
 .cell.selected.iv-6 .dot { background: #f39c12; }
-.cell.selected.iv-b .dot { background: #7f8c8d; }
+.cell.selected.iv-7 .dot { background: #9b59b6; }
+.cell.selected.iv-b2 .dot { background: #1a6fa0; }
+.cell.selected.iv-b3 .dot { background: #a85a15; }
+.cell.selected.iv-b4 .dot { background: #117a60; }
+.cell.selected.iv-b5 .dot { background: #1e8449; }
+.cell.selected.iv-b6 .dot { background: #b7770a; }
+.cell.selected.iv-b7 .dot { background: #6c3483; }
 
 /* --- Controls --- */
 .controls {
@@ -431,13 +436,18 @@ h1 {
 }
 
 .note-cell.iv-1 .interval, .note-cell.iv-1 .octave-dot { color: #e74c3c; }
-.note-cell.iv-3 .interval, .note-cell.iv-3 .octave-dot { color: #e67e22; }
-.note-cell.iv-5 .interval, .note-cell.iv-5 .octave-dot { color: #2ecc71; }
-.note-cell.iv-7 .interval, .note-cell.iv-7 .octave-dot { color: #9b59b6; }
 .note-cell.iv-2 .interval, .note-cell.iv-2 .octave-dot { color: #3498db; }
+.note-cell.iv-3 .interval, .note-cell.iv-3 .octave-dot { color: #e67e22; }
 .note-cell.iv-4 .interval, .note-cell.iv-4 .octave-dot { color: #1abc9c; }
+.note-cell.iv-5 .interval, .note-cell.iv-5 .octave-dot { color: #2ecc71; }
 .note-cell.iv-6 .interval, .note-cell.iv-6 .octave-dot { color: #f39c12; }
-.note-cell.iv-b .interval, .note-cell.iv-b .octave-dot { color: #7f8c8d; }
+.note-cell.iv-7 .interval, .note-cell.iv-7 .octave-dot { color: #9b59b6; }
+.note-cell.iv-b2 .interval, .note-cell.iv-b2 .octave-dot { color: #1a6fa0; }
+.note-cell.iv-b3 .interval, .note-cell.iv-b3 .octave-dot { color: #a85a15; }
+.note-cell.iv-b4 .interval, .note-cell.iv-b4 .octave-dot { color: #117a60; }
+.note-cell.iv-b5 .interval, .note-cell.iv-b5 .octave-dot { color: #1e8449; }
+.note-cell.iv-b6 .interval, .note-cell.iv-b6 .octave-dot { color: #b7770a; }
+.note-cell.iv-b7 .interval, .note-cell.iv-b7 .octave-dot { color: #6c3483; }
 
 /* --- Responsive --- */
 @media (max-width: 900px) {
@@ -537,14 +547,28 @@ const SCALES = {
 
 // Hardcoded presets (hand-picked positions for E-shape)
 const PRESETS = {
+  // --- Major family ---
   'Major':       [[0,2],[1,4],[2,4],[3,3],[4,2],[5,2]],
   'Major Arp':   [[0,2],[1,1],[1,4],[2,4],[3,3],[4,2],[5,2]],
   'Maj7 Arp':    [[0,1],[0,2],[1,1],[1,4],[2,3],[2,4],[3,3],[4,2],[5,1],[5,2]],
   'Maj9 Arp':    [[0,1],[0,2],[0,4],[1,1],[1,4],[2,3],[2,4],[3,1],[3,3],[4,2],[5,1],[5,2],[5,4]],
+  'Major Scale': [[0,1],[0,2],[0,4],[1,1],[1,2],[1,4],[2,1],[2,3],[2,4],[3,1],[3,3],[3,4],[4,2],[4,4],[5,1],[5,2],[5,4]],
+  // --- Dominant family ---
   'Dom7 Arp':    [[0,0],[0,2],[1,1],[1,4],[2,2],[2,4],[3,3],[4,2],[4,5],[5,2],[5,6]],
   'Dom9 Arp':    [[0,0],[0,2],[0,4],[1,1],[1,4],[2,2],[2,4],[3,1],[3,3],[4,2],[4,5],[5,2],[5,4],[5,6]],
-  'Major Scale': [[0,1],[0,2],[0,4],[1,1],[1,2],[1,4],[2,1],[2,3],[2,4],[3,1],[3,3],[3,4],[4,2],[4,4],[5,1],[5,2],[5,4]],
   'Mixolydian':  [[0,0],[0,2],[0,4],[1,1],[1,2],[1,4],[2,1],[2,2],[2,4],[3,1],[3,3],[3,4],[4,2],[4,4],[4,5],[5,2],[5,4],[5,6]],
+  // --- Minor family ---
+  'Minor':       [[0,2],[1,4],[2,4],[3,2],[4,2],[5,2]],
+  'Minor Arp':   [[0,2],[0,5],[1,4],[2,4],[3,2],[4,2],[5,2],[5,5]],
+  'Min7 Arp':    [[0,2],[0,5],[1,4],[2,2],[2,4],[3,2],[4,2],[4,5],[5,2],[5,5]],
+  'Min9 Arp':    [[0,2],[0,4],[0,5],[1,4],[2,2],[2,4],[3,1],[3,2],[4,2],[4,5],[5,2],[5,4],[5,5]],
+  'Pentatonic':  [[0,2],[0,5],[1,2],[1,4],[2,2],[2,4],[3,2],[3,4],[4,2],[4,5],[5,2],[5,5]],
+  'Blues':        [[0,2],[0,5],[1,2],[1,3],[1,4],[2,2],[2,4],[3,2],[3,4],[3,5],[4,2],[4,5],[5,2],[5,5]],
+  'Dorian':      [[0,2],[0,4],[0,5],[1,2],[1,4],[2,1],[2,2],[2,4],[3,1],[3,2],[3,4],[4,2],[4,4],[4,5],[5,2],[5,4],[5,5]],
+  'Minor Scale': [[0,2],[0,4],[0,5],[1,2],[1,4],[1,5],[2,2],[2,4],[3,1],[3,2],[3,4],[4,2],[4,3],[4,5],[5,2],[5,4],[5,5]],
+  // --- Diminished family ---
+  'm7b5':        [[0,2],[0,5],[1,3],[2,2],[2,4],[3,2],[3,5],[4,5],[5,2],[5,5]],
+  'Dim7':        [[0,2],[0,5],[1,3],[1,6],[2,4],[3,2],[3,5],[4,4],[5,2],[5,5]],
 };
 
 // ============================================================
@@ -630,8 +654,8 @@ function ivClass(name) {
   const aliases = {'9':'2','11':'4','13':'6'};
   const resolved = aliases[name] || name;
   const n = resolved.replace('b', '');
-  if ('1234567'.includes(n) && !resolved.startsWith('b')) return 'iv-' + n;
-  return 'iv-b';
+  if ('1234567'.includes(n)) return 'iv-' + (resolved.startsWith('b') ? 'b' : '') + n;
+  return 'iv-b2';
 }
 
 // ============================================================
@@ -745,6 +769,16 @@ const PRESET_GRID = [
   ['Dom7 Arp',    2],
   ['Dom9 Arp',    3],
   ['Mixolydian',  4],
+  ['Minor',       1],
+  ['Minor Arp',   2],
+  ['Min7 Arp',    2],
+  ['Min9 Arp',    3],
+  ['Dorian',      4],
+  ['Pentatonic',  3],
+  ['Minor Scale', 4],
+  ['m7b5',        2],
+  ['Blues',        3],
+  ['Dim7',        2],
 ];
 
 function buildPresets() {
