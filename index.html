@@ -952,10 +952,13 @@ function buildNotePool() {
   });
   notes.sort((a, b) => a.semitone - b.semitone);
 
-  // jianpu octave dots: middle octave (semitones 0-11) = no dot
-  notes.forEach(n => { n.dots = Math.floor(n.semitone / 12); });
-  // clamp to -1..1 so we only ever show 1 dot above or below
-  notes.forEach(n => { n.dots = Math.max(-1, Math.min(1, n.dots)); });
+  // octave dots: semitones 0-23 (two octaves covering the E shape) = no dot
+  // only notes above semitone 23 get a dot above, below 0 get a dot below
+  notes.forEach(n => {
+    if (n.semitone >= 24) n.dots = 1;
+    else if (n.semitone < 0) n.dots = -1;
+    else n.dots = 0;
+  });
 
   return notes;
 }
