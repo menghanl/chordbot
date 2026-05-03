@@ -933,32 +933,44 @@ function updateAllUI() {
 // ============================================================
 
 function buildNotePool() {
+  // Use E shape preset offsets directly for generation
   const notes = [];
-  // only use E-shape notes for generation (within E zone: rootFret-2 to rootFret+4)
-  const eMin = rootFret - 2;
-  const eMax = rootFret + 4;
-  selectedNotes.forEach(key => {
-    const [s, f] = key.split('-').map(Number);
-    if (f < eMin || f > eMax) return;
-    const semi = semitoneFromRoot(s, f);
-    const interval = intervalName(semi);
-    notes.push({
-      stringIdx: s,
-      fret: f,
-      semitone: semi,
-      interval: interval,
-      stringLabel: STRING_LABELS[s],
+  const preset = activePreset && PRESETS[activePreset];
+  if (preset && preset.E) {
+    preset.E.forEach(([s, offset]) => {
+      const fret = rootFret + offset;
+      if (fret < 0 || fret >= TOTAL_FRETS) return;
+      if (!selectedNotes.has(s + '-' + fret)) return;
+      const semi = offset + (OPEN_TUNING[s] - OPEN_TUNING[0]); // same as old STRING_OFFSETS[s] + offset
+      const interval = intervalName(semi);
+      notes.push({
+        stringIdx: s,
+        fret: fret,
+        semitone: semi,
+        interval: interval,
+        stringLabel: STRING_LABELS[s],
+      });
     });
-  });
+  } else {
+    // custom selection: use all selected notes
+    selectedNotes.forEach(key => {
+      const [s, f] = key.split('-').map(Number);
+      const semi = semitoneFromRoot(s, f);
+      const interval = intervalName(semi);
+      notes.push({
+        stringIdx: s,
+        fret: f,
+        semitone: semi,
+        interval: interval,
+        stringLabel: STRING_LABELS[s],
+      });
+    });
+  }
   notes.sort((a, b) => a.semitone - b.semitone);
 
-  // octave dots: semitones 0-23 (two octaves covering the E shape) = no dot
-  // only notes above semitone 23 get a dot above, below 0 get a dot below
-  notes.forEach(n => {
-    if (n.semitone >= 24) n.dots = 1;
-    else if (n.semitone < 0) n.dots = -1;
-    else n.dots = 0;
-  });
+  // octave dots: same as original — floor(semi/12) - 1
+  // semi 0-11 = dot below, 12-23 = no dot, 24+ = dot above
+  notes.forEach(n => { n.dots = Math.floor(n.semitone / 12) - 1; });
 
   return notes;
 }
