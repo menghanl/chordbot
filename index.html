@@ -186,16 +186,48 @@ h1 {
 .presets button.clear { border-color: var(--clear-border); color: var(--clear-text); }
 .presets button.clear:hover { background: var(--clear-hover); }
 
-/* --- Fretboard --- */
-.fretboard-container {
+/* --- Root display & shape jumps --- */
+.root-display {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.shape-jumps {
   display: flex;
   justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.shape-jump {
+  padding: 4px 12px;
+  border: 2px solid var(--root-col-border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.shape-jump:hover { background: var(--btn-hover); }
+.shape-jump#jumpE { border-color: rgba(100, 100, 255, 0.5); }
+.shape-jump#jumpA { border-color: rgba(255, 160, 60, 0.5); }
+
+/* --- Fretboard --- */
+.fretboard-container {
+  overflow-x: auto;
   margin-bottom: 20px;
+  padding-bottom: 4px;
 }
 
 .fretboard {
   display: grid;
-  grid-template-columns: 24px repeat(7, 52px);
+  grid-template-columns: 24px repeat(16, 48px);
   grid-template-rows: repeat(6, 42px);
 }
 
@@ -219,8 +251,7 @@ h1 {
 
 .fret-headers {
   display: grid;
-  grid-template-columns: 24px repeat(7, 52px);
-  justify-content: center;
+  grid-template-columns: 24px repeat(16, 48px);
   margin-bottom: 2px;
 }
 
@@ -244,28 +275,45 @@ h1 {
 .fretboard .row-1 .cell::before { height: 2.5px; margin-top: -0.75px; }
 .fretboard .row-2 .cell::before { height: 2px; margin-top: -0.5px; }
 
-.cell.root-col {
-  background: var(--root-col-bg);
-  border-left: 2px solid var(--root-col-border);
+.cell.e-zone { background: rgba(100, 100, 255, 0.04); }
+.cell.e-zone-root { background: var(--root-col-bg); border-left: 2px solid var(--root-col-border); }
+
+.cell.a-zone { background: rgba(255, 160, 60, 0.04); }
+.cell.a-zone-root { background: rgba(255, 160, 60, 0.08); border-left: 2px solid rgba(255, 160, 60, 0.5); }
+
+.fret-headers .shape-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--heading);
+  opacity: 0.7;
+}
+
+.fret-headers .root-fret {
+  font-weight: 700;
+  color: var(--heading);
 }
 
 .cell .dot {
-  width: 32px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   z-index: 1;
   color: var(--dot-text);
   transition: all 0.15s;
+  line-height: 1.1;
 }
 
-.cell .dot .oct { font-size: 0.3rem; line-height: 1; height: 5px; visibility: hidden; }
-.cell.selected .dot .oct { visibility: visible; }
+.cell .dot .note-name {
+  font-size: 0.45rem;
+  font-weight: 400;
+  opacity: 0.6;
+}
 
 .cell:hover .dot { background: var(--dot-hover); }
 
@@ -336,17 +384,6 @@ h1 {
 
 .controls button:hover { background: #3a5fef; }
 .controls button:disabled { background: var(--btn-bg); color: var(--muted); cursor: not-allowed; }
-
-.root-picker {
-  text-align: center;
-  margin-top: 4px;
-}
-
-.root-display {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text);
-}
 
 .seed-display {
   text-align: center;
@@ -464,9 +501,9 @@ h1 {
 @media (max-width: 500px) {
   body { padding: 10px; }
   h1 { font-size: 1.2rem; margin-bottom: 10px; }
-  .fretboard { grid-template-columns: 20px repeat(7, 40px); grid-template-rows: repeat(6, 36px); }
-  .fret-headers { grid-template-columns: 20px repeat(7, 40px); }
-  .cell .dot { width: 28px; height: 28px; font-size: 0.65rem; }
+  .fretboard { grid-template-columns: 20px repeat(16, 38px); grid-template-rows: repeat(6, 36px); }
+  .fret-headers { grid-template-columns: 20px repeat(16, 38px); }
+  .cell .dot { width: 30px; height: 30px; font-size: 0.6rem; }
   .presets button { padding: 5px 8px; font-size: 0.75rem; }
   .note-cell { width: 34px; }
   .note-cell .interval { font-size: 1rem; }
@@ -486,8 +523,14 @@ h1 {
 
       <div class="presets" id="presets"></div>
 
-      <div class="fret-headers" id="fret-headers"></div>
-      <div class="fretboard-container">
+      <div class="root-display" id="rootDisplay"></div>
+      <div class="shape-jumps">
+        <button class="shape-jump" id="jumpE">E shape</button>
+        <button class="shape-jump" id="jumpA">A shape</button>
+      </div>
+
+      <div class="fretboard-container" id="fretboardContainer">
+        <div class="fret-headers" id="fret-headers"></div>
         <div class="fretboard" id="fretboard"></div>
       </div>
 
@@ -501,9 +544,6 @@ h1 {
       </div>
 
       <div class="seed-display" id="seedDisplay"></div>
-      <div class="root-picker">
-        <span class="root-display" id="rootDisplay"></span>
-      </div>
     </div>
   </aside>
   <main class="main">
@@ -519,131 +559,80 @@ h1 {
 // ============================================================
 
 const INTERVAL_NAMES = ['1','b2','2','b3','3','4','b5','5','b6','6','b7','7'];
-const NOTE_NAMES = ['E','F','F#','G','G#','A','A#','B','C','C#','D','D#'];
-const STRING_OFFSETS = [0, 5, 10, 15, 19, 24]; // semitones from root: strings 6..1
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const OPEN_TUNING = [40, 45, 50, 55, 59, 64]; // MIDI: E2, A2, D3, G3, B3, E4
 const STRING_LABELS  = ['6','5','4','3','2','1'];
 const NUM_STRINGS = 6;
-const NUM_FRETS = 7;
-const ROOT_COL = 2; // column index where the root sits
+const TOTAL_FRETS = 16; // frets 0-15
 
-// Chord formulas in semitones from root
-const CHORDS = {
-  'Major':  { semitones: [0, 4, 7],         label: 'Major' },
-  'Minor':  { semitones: [0, 3, 7],         label: 'Minor' },
-  'Maj7':   { semitones: [0, 4, 7, 11],     label: 'Maj7' },
-  'Dom7':   { semitones: [0, 4, 7, 10],     label: 'Dom7' },
-  'Min7':   { semitones: [0, 3, 7, 10],     label: 'Min7' },
-  'm7b5':   { semitones: [0, 3, 6, 10],     label: 'm7b5' },
-  'Dim7':   { semitones: [0, 3, 6, 9],      label: 'Dim7' },
-};
-
-// Scale formulas in semitones from root
-const SCALES = {
-  'Major':  { semitones: [0, 2, 4, 5, 7, 9, 11], label: 'Major' },
-  'Minor':  { semitones: [0, 2, 3, 5, 7, 8, 10], label: 'Minor' },
-  'Dorian': { semitones: [0, 2, 3, 5, 7, 9, 10], label: 'Dorian' },
-  'Mixo':   { semitones: [0, 2, 4, 5, 7, 9, 10], label: 'Mixolydian' },
-};
-
-// Hardcoded presets (hand-picked positions for E-shape)
+// Presets: { E: [[stringIdx, offset], ...], A: [[stringIdx, offset], ...] }
+// E offsets relative to E-shape root fret, A offsets relative to A-shape root fret
 const PRESETS = {
   // --- Major family ---
-  'Major':       [[0,2],[1,4],[2,4],[3,3],[4,2],[5,2]],
-  'Major Arp':   [[0,2],[1,1],[1,4],[2,4],[3,3],[4,2],[5,2]],
-  'Maj7 Arp':    [[0,1],[0,2],[1,1],[1,4],[2,3],[2,4],[3,3],[4,2],[5,1],[5,2]],
-  'Maj9 Arp':    [[0,1],[0,2],[0,4],[1,1],[1,4],[2,3],[2,4],[3,1],[3,3],[4,2],[5,1],[5,2],[5,4]],
-  'Major Scale': [[0,1],[0,2],[0,4],[1,1],[1,2],[1,4],[2,1],[2,3],[2,4],[3,1],[3,3],[3,4],[4,2],[4,4],[5,1],[5,2],[5,4]],
+  'Major':       { E: [[0,0],[1,2],[2,2],[3,1],[4,0],[5,0]],
+                   A: [[0,0],[1,0],[2,2],[3,2],[4,2],[5,0]] },
+  'Major Arp':   { E: [[0,0],[1,-1],[1,2],[2,2],[3,1],[4,0],[5,0]],
+                   A: [[0,0],[1,0],[2,-1],[2,2],[3,2],[4,2],[5,0]] },
+  'Maj7 Arp':    { E: [[0,-1],[0,0],[1,-1],[1,2],[2,1],[2,2],[3,1],[4,0],[5,-1],[5,0]],
+                   A: [[0,0],[1,-1],[1,0],[2,-1],[2,2],[3,1],[3,2],[4,2],[5,0]] },
+  'Maj9 Arp':    { E: [[0,-1],[0,0],[0,2],[1,-1],[1,2],[2,1],[2,2],[3,-1],[3,1],[4,0],[5,-1],[5,0],[5,2]],
+                   A: [[0,0],[1,-1],[1,0],[1,2],[2,-1],[2,2],[3,1],[3,2],[4,0],[4,2],[5,0]] },
+  'Major Scale': { E: [[0,-1],[0,0],[0,2],[1,-1],[1,0],[1,2],[2,-1],[2,1],[2,2],[3,-1],[3,1],[3,2],[4,0],[4,2],[5,-1],[5,0],[5,2]],
+                   A: [[0,0],[0,2],[1,-1],[1,0],[1,2],[2,-1],[2,0],[2,2],[3,-1],[3,1],[3,2],[4,0],[4,2],[4,3],[5,0],[5,2]] },
   // --- Dominant family ---
-  'Dom7 Arp':    [[0,0],[0,2],[1,1],[1,4],[2,2],[2,4],[3,3],[4,2],[4,5],[5,2],[5,6]],
-  'Dom9 Arp':    [[0,0],[0,2],[0,4],[1,1],[1,4],[2,2],[2,4],[3,1],[3,3],[4,2],[4,5],[5,2],[5,4],[5,6]],
-  'Mixolydian':  [[0,0],[0,2],[0,4],[1,1],[1,2],[1,4],[2,1],[2,2],[2,4],[3,1],[3,3],[3,4],[4,2],[4,4],[4,5],[5,2],[5,4],[5,6]],
+  'Dom7 Arp':    { E: [[0,-2],[0,0],[1,-1],[1,2],[2,0],[2,2],[3,1],[4,0],[4,3],[5,0],[5,4]],
+                   A: [[0,0],[0,3],[1,0],[2,-1],[2,2],[3,0],[3,2],[4,2],[5,0],[5,3]] },
+  'Dom9 Arp':    { E: [[0,-2],[0,0],[0,2],[1,-1],[1,2],[2,0],[2,2],[3,-1],[3,1],[4,0],[4,3],[5,0],[5,2],[5,4]],
+                   A: [[0,0],[0,3],[1,0],[1,2],[2,-1],[2,2],[3,0],[3,2],[4,0],[4,2],[5,0],[5,3]] },
+  'Mixolydian':  { E: [[0,-2],[0,0],[0,2],[1,-1],[1,0],[1,2],[2,-1],[2,0],[2,2],[3,-1],[3,1],[3,2],[4,0],[4,2],[4,3],[5,0],[5,2],[5,4]],
+                   A: [[0,0],[0,2],[0,3],[1,0],[1,2],[2,-1],[2,0],[2,2],[3,-1],[3,0],[3,2],[4,0],[4,2],[4,3],[5,0],[5,2],[5,3]] },
   // --- Minor family ---
-  'Minor':       [[0,2],[1,4],[2,4],[3,2],[4,2],[5,2]],
-  'Minor Arp':   [[0,2],[0,5],[1,4],[2,4],[3,2],[4,2],[5,2],[5,5]],
-  'Min7 Arp':    [[0,2],[0,5],[1,4],[2,2],[2,4],[3,2],[4,2],[4,5],[5,2],[5,5]],
-  'Min9 Arp':    [[0,2],[0,4],[0,5],[1,4],[2,2],[2,4],[3,1],[3,2],[4,2],[4,5],[5,2],[5,4],[5,5]],
-  'Pentatonic':  [[0,2],[0,5],[1,2],[1,4],[2,2],[2,4],[3,2],[3,4],[4,2],[4,5],[5,2],[5,5]],
-  'Blues':        [[0,2],[0,5],[1,2],[1,3],[1,4],[2,2],[2,4],[3,2],[3,4],[3,5],[4,2],[4,5],[5,2],[5,5]],
-  'Dorian':      [[0,2],[0,4],[0,5],[1,2],[1,4],[2,1],[2,2],[2,4],[3,1],[3,2],[3,4],[4,2],[4,4],[4,5],[5,2],[5,4],[5,5]],
-  'Minor Scale': [[0,2],[0,4],[0,5],[1,2],[1,4],[1,5],[2,2],[2,4],[3,1],[3,2],[3,4],[4,2],[4,3],[4,5],[5,2],[5,4],[5,5]],
+  'Minor':       { E: [[0,0],[1,2],[2,2],[3,0],[4,0],[5,0]],
+                   A: [[0,0],[1,0],[2,2],[3,2],[4,1],[5,0]] },
+  'Minor Arp':   { E: [[0,0],[0,3],[1,2],[2,2],[3,0],[4,0],[5,0],[5,3]],
+                   A: [[0,0],[1,0],[1,3],[2,2],[3,2],[4,1],[5,0]] },
+  'Min7 Arp':    { E: [[0,0],[0,3],[1,2],[2,0],[2,2],[3,0],[4,0],[4,3],[5,0],[5,3]],
+                   A: [[0,0],[0,3],[1,0],[1,3],[2,2],[3,0],[3,2],[4,1],[5,0],[5,3]] },
+  'Min9 Arp':    { E: [[0,0],[0,2],[0,3],[1,2],[2,0],[2,2],[3,-1],[3,0],[4,0],[4,3],[5,0],[5,2],[5,3]],
+                   A: [[0,0],[0,3],[1,0],[1,2],[1,3],[2,2],[3,0],[3,2],[4,0],[4,1],[5,0],[5,3]] },
+  'Pentatonic':  { E: [[0,0],[0,3],[1,0],[1,2],[2,0],[2,2],[3,0],[3,2],[4,0],[4,3],[5,0],[5,3]],
+                   A: [[0,0],[0,3],[1,0],[1,3],[2,0],[2,2],[3,0],[3,2],[4,1],[4,3],[5,0],[5,3]] },
+  'Blues':        { E: [[0,0],[0,3],[1,0],[1,1],[1,2],[2,0],[2,2],[3,0],[3,2],[3,3],[4,0],[4,3],[5,0],[5,3]],
+                   A: [[0,-1],[0,0],[0,3],[1,0],[1,3],[2,0],[2,1],[2,2],[3,0],[3,2],[4,1],[4,3],[5,0],[5,3]] },
+  'Dorian':      { E: [[0,0],[0,2],[0,3],[1,0],[1,2],[2,-1],[2,0],[2,2],[3,-1],[3,0],[3,2],[4,0],[4,2],[4,3],[5,0],[5,2],[5,3]],
+                   A: [[0,0],[0,2],[0,3],[1,0],[1,2],[1,3],[2,0],[2,2],[3,-1],[3,0],[3,2],[4,0],[4,1],[4,3],[5,0],[5,2],[5,3]] },
+  'Minor Scale': { E: [[0,0],[0,2],[0,3],[1,0],[1,2],[1,3],[2,0],[2,2],[3,-1],[3,0],[3,2],[4,0],[4,1],[4,3],[5,0],[5,2],[5,3]],
+                   A: [[0,0],[0,1],[0,3],[1,0],[1,2],[1,3],[2,0],[2,2],[2,3],[3,0],[3,2],[4,0],[4,1],[4,3],[5,0],[5,1],[5,3]] },
   // --- Diminished family ---
-  'm7b5':        [[0,2],[0,5],[1,3],[2,2],[2,4],[3,2],[3,5],[4,5],[5,2],[5,5]],
-  'Dim7':        [[0,2],[0,5],[1,3],[1,6],[2,4],[3,2],[3,5],[4,4],[5,2],[5,5]],
+  'm7b5':        { E: [[0,0],[0,3],[1,1],[2,0],[2,2],[3,0],[3,3],[4,3],[5,0],[5,3]],
+                   A: [[0,-1],[0,0],[0,3],[1,0],[1,3],[2,1],[3,0],[3,2],[4,1],[5,0],[5,3]] },
+  'Dim7':        { E: [[0,0],[0,3],[1,1],[1,4],[2,2],[3,0],[3,3],[4,2],[5,0],[5,3]],
+                   A: [[0,-1],[0,0],[1,0],[1,3],[2,1],[3,-1],[3,2],[4,1],[5,0],[5,2]] },
 };
 
 // ============================================================
 // FRETBOARD COMPUTATION
 // ============================================================
 
-// Get the semitone (relative to root) at a given grid position
-function semitoneAt(stringIdx, col) {
-  return STRING_OFFSETS[stringIdx] + (col - ROOT_COL);
+// Absolute MIDI pitch at a fretboard position
+function midiPitch(stringIdx, fret) {
+  return OPEN_TUNING[stringIdx] + fret;
 }
 
-// Get interval name from semitone
+// Semitone interval relative to current root
+function semitoneFromRoot(stringIdx, fret) {
+  const rootPitch = OPEN_TUNING[0] + rootFret; // root on string 6
+  return midiPitch(stringIdx, fret) - rootPitch;
+}
+
+// Get interval name from semitone offset
 function intervalName(semitone) {
   return INTERVAL_NAMES[((semitone % 12) + 12) % 12];
 }
 
-// Find all grid positions where a given set of semitones appear
-function findPositions(semitoneSet) {
-  const positions = [];
-  for (let s = 0; s < NUM_STRINGS; s++) {
-    for (let c = 0; c < NUM_FRETS; c++) {
-      const semi = semitoneAt(s, c);
-      if (semitoneSet.has(((semi % 12) + 12) % 12)) {
-        positions.push([s, c]);
-      }
-    }
-  }
-  return positions;
-}
-
-// Chord voicing: for each string, pick the chord tone used in the E-shape voicing
-// E-shape voicing follows the barre chord pattern
-function chordVoicing(chordSemitones) {
-  const toneSet = new Set(chordSemitones);
-  const positions = [];
-  for (let s = 0; s < NUM_STRINGS; s++) {
-    // For chord voicing, prefer frets closest to the root position
-    // Check frets in the chord box range (ROOT_COL to ROOT_COL+2)
-    let best = null;
-    for (let c = ROOT_COL; c <= ROOT_COL + 2; c++) {
-      if (c >= NUM_FRETS) break;
-      const semi = ((semitoneAt(s, c) % 12) + 12) % 12;
-      if (toneSet.has(semi)) {
-        best = [s, c];
-        break; // prefer lower fret in the voicing range
-      }
-    }
-    if (best) positions.push(best);
-  }
-  return positions;
-}
-
-// Arpeggio: all chord tones in the full position box
-function arpeggioPositions(chordSemitones) {
-  return findPositions(new Set(chordSemitones));
-}
-
-// Scale: all scale tones in the full position box
-function scalePositions(scaleSemitones) {
-  return findPositions(new Set(scaleSemitones));
-}
-
-// Compute positions for a chord+mode selection
-function computePositions(chordName, modeName) {
-  const chord = CHORDS[chordName];
-  if (modeName === 'chord') {
-    return chordVoicing(chord.semitones);
-  } else if (modeName === 'arp') {
-    return arpeggioPositions(chord.semitones);
-  } else if (modeName === 'scale') {
-    const scaleNames = CHORD_SCALES[chordName] || [];
-    if (scaleNames.length === 0) return arpeggioPositions(chord.semitones);
-    return scalePositions(SCALES[scaleNames[0]].semitones);
-  }
-  return [];
+// Get note name at a fretboard position
+function noteName(stringIdx, fret) {
+  return NOTE_NAMES[midiPitch(stringIdx, fret) % 12];
 }
 
 // ============================================================
@@ -662,8 +651,10 @@ function ivClass(name) {
 // STATE
 // ============================================================
 
-let selectedNotes = new Set();   // "s-c" keys
+let selectedNotes = new Set();   // "s-fret" keys (absolute fret numbers)
 let activePreset = 'Major';
+let rootFret = 0; // absolute fret where the root is
+let activeShape = 'E'; // which shape the user last jumped to
 let currentSeed = parseInt(localStorage.getItem('cb-seed')) || Date.now();
 
 // seeded PRNG (mulberry32)
@@ -687,10 +678,23 @@ function newSeed() {
 
 function buildFretHeaders() {
   const el = document.getElementById('fret-headers');
-  el.innerHTML = '<span></span>';
-  for (let c = 0; c < NUM_FRETS; c++) {
+  el.innerHTML = '<span></span>'; // spacer for string labels
+  for (let f = 0; f < TOTAL_FRETS; f++) {
     const span = document.createElement('span');
-    span.textContent = c === ROOT_COL ? 'R' : '';
+    span.dataset.fret = f;
+    const aShapeFret = ((rootFret - 5) % 12 + 12) % 12;
+    if (f === rootFret && f === aShapeFret) {
+      span.innerHTML = f + '<br><span class="shape-label">E A</span>';
+      span.classList.add('root-fret');
+    } else if (f === rootFret) {
+      span.innerHTML = f + '<br><span class="shape-label">E</span>';
+      span.classList.add('root-fret');
+    } else if (f === aShapeFret) {
+      span.innerHTML = f + '<br><span class="shape-label">A</span>';
+      span.classList.add('root-fret');
+    } else {
+      span.textContent = f;
+    }
     el.appendChild(span);
   }
 }
@@ -704,32 +708,32 @@ function buildFretboard() {
     label.textContent = STRING_LABELS[s];
     fb.appendChild(label);
 
-    for (let c = 0; c < NUM_FRETS; c++) {
+    for (let f = 0; f < TOTAL_FRETS; f++) {
       const cell = document.createElement('div');
-      const key = s + '-' + c;
-      const interval = intervalName(semitoneAt(s, c));
+      const key = s + '-' + f;
+      const semi = semitoneFromRoot(s, f);
+      const interval = intervalName(semi);
+      const note = noteName(s, f);
 
+      const aRoot = aShapeRootFret();
       cell.className = 'cell row-' + s;
-      if (c === ROOT_COL) cell.classList.add('root-col');
+      if (f === rootFret) cell.classList.add('e-zone-root');
+      else if (f === rootFret + 1 || f === rootFret + 2) cell.classList.add('e-zone');
+      if (f === aRoot) cell.classList.add('a-zone-root');
+      else if (f === aRoot + 1 || f === aRoot + 2) cell.classList.add('a-zone');
       cell.dataset.key = key;
-      cell.dataset.interval = interval;
-
-      const semi = semitoneAt(s, c);
-      const dots = Math.floor(semi / 12) - 1;
+      cell.dataset.string = s;
+      cell.dataset.fret = f;
 
       const dot = document.createElement('div');
       dot.className = 'dot';
-      const octAbove = document.createElement('span');
-      octAbove.className = 'oct';
-      octAbove.textContent = dots > 0 ? '\u25CF'.repeat(dots) : '';
-      dot.appendChild(octAbove);
       const ivSpan = document.createElement('span');
       ivSpan.textContent = interval;
       dot.appendChild(ivSpan);
-      const octBelow = document.createElement('span');
-      octBelow.className = 'oct';
-      octBelow.textContent = dots < 0 ? '\u25CF'.repeat(-dots) : '';
-      dot.appendChild(octBelow);
+      const noteSpan = document.createElement('span');
+      noteSpan.className = 'note-name';
+      noteSpan.textContent = note;
+      dot.appendChild(noteSpan);
       cell.appendChild(dot);
 
       cell.addEventListener('click', () => {
@@ -747,12 +751,51 @@ function buildFretboard() {
 function updateFretboard() {
   document.querySelectorAll('.fretboard .cell').forEach(cell => {
     const key = cell.dataset.key;
-    const interval = cell.dataset.interval;
-    cell.className = cell.className.replace(/ selected| iv-\S+/g, '');
+    const s = parseInt(cell.dataset.string);
+    const f = parseInt(cell.dataset.fret);
+    const interval = intervalName(semitoneFromRoot(s, f));
+
+    // update labels (interval + note name) when root changes
+    const dot = cell.querySelector('.dot');
+    const spans = dot.querySelectorAll('span');
+    spans[0].textContent = interval;
+    spans[1].textContent = noteName(s, f);
+
+    // update root column highlight
+    cell.classList.toggle('root-col', f === rootFret);
+
+    // update zone + selection styling
+    const aRoot = aShapeRootFret();
+    cell.className = cell.className.replace(/ selected| iv-\S+| e-zone\S*| a-zone\S*/g, '');
+    if (f === rootFret) cell.classList.add('e-zone-root');
+    else if (f === rootFret + 1 || f === rootFret + 2) cell.classList.add('e-zone');
+    if (f === aRoot) cell.classList.add('a-zone-root');
+    else if (f === aRoot + 1 || f === aRoot + 2) cell.classList.add('a-zone');
     if (selectedNotes.has(key)) {
       cell.classList.add('selected', ivClass(interval));
     }
   });
+}
+
+function scrollToFret(fret, smooth) {
+  const container = document.getElementById('fretboardContainer');
+  const cellWidth = container.querySelector('.cell') ?
+    container.querySelector('.cell').offsetWidth : 48;
+  const targetX = 24 + fret * cellWidth - container.clientWidth / 3;
+  if (smooth) {
+    container.scrollTo({ left: Math.max(0, targetX), behavior: 'smooth' });
+  } else {
+    container.scrollLeft = Math.max(0, targetX);
+  }
+}
+
+function scrollToRoot() {
+  scrollToFret(rootFret, false);
+}
+
+function updateRootDisplay() {
+  const rootNote = NOTE_NAMES[(OPEN_TUNING[0] + rootFret) % 12];
+  document.getElementById('rootDisplay').textContent = 'Root: ' + rootNote + ' (fret ' + rootFret + ')';
 }
 
 // ============================================================
@@ -811,22 +854,44 @@ function buildPresets() {
   container.appendChild(clearBtn);
 }
 
-function getPresetPositions(name) {
-  const p = PRESETS[name];
-  return Array.isArray(p) ? p : p.pos;
-}
-
-function getPresetLabels(name) {
-  const p = PRESETS[name];
-  return (p && !Array.isArray(p) && p.labels) || {};
+function aShapeRootFret() {
+  return ((rootFret - 5) % 12 + 12) % 12;
 }
 
 function loadPreset(name) {
   selectedNotes.clear();
-  getPresetPositions(name).forEach(([s, c]) => selectedNotes.add(s + '-' + c));
+  const preset = PRESETS[name];
+  // E shape notes (relative to rootFret)
+  if (preset.E) {
+    preset.E.forEach(([s, offset]) => {
+      const fret = rootFret + offset;
+      if (fret >= 0 && fret < TOTAL_FRETS) {
+        selectedNotes.add(s + '-' + fret);
+      }
+    });
+  }
+  // A shape notes (relative to A-shape root fret)
+  if (preset.A) {
+    const aRoot = aShapeRootFret();
+    preset.A.forEach(([s, offset]) => {
+      const fret = aRoot + offset;
+      if (fret >= 0 && fret < TOTAL_FRETS) {
+        selectedNotes.add(s + '-' + fret);
+      }
+    });
+  }
   activePreset = name;
   updateAllUI();
+  scrollToActiveShape();
   generate(false);
+}
+
+function scrollToActiveShape() {
+  if (activeShape === 'A') {
+    scrollToFret(aShapeRootFret(), false);
+  } else {
+    scrollToFret(rootFret, false);
+  }
 }
 
 function updateAllUI() {
@@ -842,24 +907,23 @@ function updateAllUI() {
 // ============================================================
 
 function buildNotePool() {
-  const labels = activePreset ? getPresetLabels(activePreset) : {};
   const notes = [];
   selectedNotes.forEach(key => {
-    const [s, c] = key.split('-').map(Number);
-    const semi = semitoneAt(s, c);
-    const base = intervalName(semi);
+    const [s, f] = key.split('-').map(Number);
+    const semi = semitoneFromRoot(s, f);
+    const interval = intervalName(semi);
     notes.push({
       stringIdx: s,
-      col: c,
+      fret: f,
       semitone: semi,
-      interval: labels[base] || base,
+      interval: interval,
       stringLabel: STRING_LABELS[s],
     });
   });
   notes.sort((a, b) => a.semitone - b.semitone);
 
-  // jianpu octave dots: middle octave (semitones 12-23) = no dot, always
-  notes.forEach(n => { n.dots = Math.floor(n.semitone / 12) - 1; });
+  // jianpu octave dots: middle octave (semitones 0-11) = no dot
+  notes.forEach(n => { n.dots = Math.floor(n.semitone / 12); });
 
   return notes;
 }
@@ -904,7 +968,7 @@ function generateMelody(notes, total, rng) {
       // penalize A-B-A bounce
       if (sequence.length >= 2) {
         const prev2 = sequence[sequence.length - 2];
-        if (notes[j].stringIdx === prev2.stringIdx && notes[j].col === prev2.col) {
+        if (notes[j].stringIdx === prev2.stringIdx && notes[j].fret === prev2.fret) {
           w *= 0.2;
         }
       }
@@ -928,23 +992,46 @@ function generateMelody(notes, total, rng) {
 }
 
 function generate(rollNew) {
+  if (rollNew) {
+    newSeed();
+    // derive random root fret from seed
+    const rootRng = makeRng(currentSeed + 1);
+    rootFret = Math.floor(rootRng() * 12) + 1;
+    // re-apply active preset at new root
+    if (activePreset && PRESETS[activePreset]) {
+      selectedNotes.clear();
+      const preset = PRESETS[activePreset];
+      if (preset.E) {
+        preset.E.forEach(([s, offset]) => {
+          const fret = rootFret + offset;
+          if (fret >= 0 && fret < TOTAL_FRETS) selectedNotes.add(s + '-' + fret);
+        });
+      }
+      if (preset.A) {
+        const aRoot = aShapeRootFret();
+        preset.A.forEach(([s, offset]) => {
+          const fret = aRoot + offset;
+          if (fret >= 0 && fret < TOTAL_FRETS) selectedNotes.add(s + '-' + fret);
+        });
+      }
+    }
+    buildFretHeaders();
+    updateFretboard();
+    updateRootDisplay();
+    scrollToActiveShape();
+  }
+
   const notes = buildNotePool();
   if (notes.length === 0) return;
 
-  if (rollNew) newSeed();
   localStorage.setItem('cb-seed', currentSeed);
   document.getElementById('seedDisplay').textContent = 'seed: ' + currentSeed;
-
-  // derive root from seed
-  const rootRng = makeRng(currentSeed + 1);
-  const rootFret = Math.floor(rootRng() * 12) + 1;
-  const rootNote = NOTE_NAMES[rootFret % 12];
-  document.getElementById('rootDisplay').textContent = 'Root: ' + rootNote + '  (fret ' + rootFret + ')';
 
   const mode = document.getElementById('genMode').value;
   localStorage.setItem('cb-preset', activePreset || '');
   localStorage.setItem('cb-bars', document.getElementById('barCount').value);
   localStorage.setItem('cb-mode', mode);
+  localStorage.setItem('cb-rootFret', rootFret);
 
   const rng = makeRng(currentSeed);
   const barCount = parseInt(document.getElementById('barCount').value) || 16;
@@ -955,7 +1042,8 @@ function generate(rollNew) {
     : generateRandom(notes, total, rng);
 
   // build header
-  let headerText = activePreset || 'Custom';
+  const rootNote = NOTE_NAMES[(OPEN_TUNING[0] + rootFret) % 12];
+  let headerText = (activePreset || 'Custom') + ' in ' + rootNote;
   headerText += ' \u2014 ' + barCount + ' bars';
   headerText += ' \u2014 ' + (mode === 'melody' ? 'Melody' : 'Random');
   document.getElementById('outputHeader').textContent = headerText;
@@ -1049,11 +1137,16 @@ function reLayoutBars() {
 // INIT
 // ============================================================
 
+// restore state from localStorage
+const savedRootFret = localStorage.getItem('cb-rootFret');
+if (savedRootFret !== null) rootFret = parseInt(savedRootFret) || 0;
+
 buildFretHeaders();
 buildFretboard();
 buildPresets();
+updateRootDisplay();
 
-// restore state from localStorage, or default to Major
+// restore preset/bars/mode from localStorage, or default to Major
 const savedPreset = localStorage.getItem('cb-preset');
 const savedBars = localStorage.getItem('cb-bars');
 const savedMode = localStorage.getItem('cb-mode');
@@ -1061,17 +1154,17 @@ if (savedBars) document.getElementById('barCount').value = savedBars;
 if (savedMode) document.getElementById('genMode').value = savedMode;
 
 if (savedPreset && PRESETS[savedPreset]) {
-  selectedNotes.clear();
-  getPresetPositions(savedPreset).forEach(([s, c]) => selectedNotes.add(s + '-' + c));
-  activePreset = savedPreset;
-  updateAllUI();
-  generate(false); // same seed = same output
+  loadPreset(savedPreset);
 } else {
   loadPreset('Major');
 }
 
 document.getElementById('generateBtn').addEventListener('click', () => generate(true));
 window.addEventListener('resize', reLayoutBars);
+
+// shape jump buttons
+document.getElementById('jumpE').addEventListener('click', () => { activeShape = 'E'; scrollToFret(rootFret, true); });
+document.getElementById('jumpA').addEventListener('click', () => { activeShape = 'A'; scrollToFret(aShapeRootFret(), true); });
 
 // --- Sidebar toggle ---
 const sidebarEl = document.getElementById('sidebar');
