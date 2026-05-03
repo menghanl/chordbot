@@ -791,9 +791,16 @@ function buildPresets() {
     btn.addEventListener('click', () => loadPreset(name));
     container.appendChild(btn);
   });
+  // spacer to force Clear onto its own row
+  const spacer = document.createElement('div');
+  spacer.style.gridColumn = '1 / -1';
+  spacer.style.height = '0';
+  container.appendChild(spacer);
+
   const clearBtn = document.createElement('button');
   clearBtn.textContent = 'Clear';
   clearBtn.className = 'clear';
+  clearBtn.style.gridColumn = '4';
   clearBtn.addEventListener('click', () => {
     selectedNotes.clear();
     activePreset = null;
