@@ -275,11 +275,19 @@ h1 {
 .fretboard .row-1 .cell::before { height: 2.5px; margin-top: -0.75px; }
 .fretboard .row-2 .cell::before { height: 2px; margin-top: -0.5px; }
 
-.cell.e-zone { background: rgba(100, 100, 255, 0.04); }
-.cell.e-zone-root { background: var(--root-col-bg); border-left: 2px solid var(--root-col-border); }
+.cell.e-zone { background: rgba(100, 100, 255, 0.10); }
+.cell.e-zone-root { background: rgba(100, 100, 255, 0.18); }
+.cell.e-zone-left { background: rgba(100, 100, 255, 0.10); border-left: 3px solid rgba(100, 100, 255, 0.6); }
+.cell.e-zone-right { border-right: 3px solid rgba(100, 100, 255, 0.6); }
+.row-5 .cell.e-zone, .row-5 .cell.e-zone-root, .row-5 .cell.e-zone-left { border-top: 3px solid rgba(100, 100, 255, 0.6); }
+.row-0 .cell.e-zone, .row-0 .cell.e-zone-root, .row-0 .cell.e-zone-left { border-bottom: 3px solid rgba(100, 100, 255, 0.6); }
 
-.cell.a-zone { background: rgba(255, 160, 60, 0.04); }
-.cell.a-zone-root { background: rgba(255, 160, 60, 0.08); border-left: 2px solid rgba(255, 160, 60, 0.5); }
+.cell.a-zone { background: rgba(255, 160, 60, 0.10); }
+.cell.a-zone-root { background: rgba(255, 160, 60, 0.18); }
+.cell.a-zone-left { background: rgba(255, 160, 60, 0.10); border-left: 3px solid rgba(255, 160, 60, 0.6); }
+.cell.a-zone-right { border-right: 3px solid rgba(255, 160, 60, 0.6); }
+.row-5 .cell.a-zone, .row-5 .cell.a-zone-root, .row-5 .cell.a-zone-left { border-top: 3px solid rgba(255, 160, 60, 0.6); }
+.row-0 .cell.a-zone, .row-0 .cell.a-zone-root, .row-0 .cell.a-zone-left { border-bottom: 3px solid rgba(255, 160, 60, 0.6); }
 
 .fret-headers .shape-label {
   font-size: 0.55rem;
@@ -717,10 +725,20 @@ function buildFretboard() {
 
       const aRoot = aShapeRootFret();
       cell.className = 'cell row-' + s;
-      if (f === rootFret) cell.classList.add('e-zone-root');
-      else if (f === rootFret + 1 || f === rootFret + 2) cell.classList.add('e-zone');
-      if (f === aRoot) cell.classList.add('a-zone-root');
-      else if (f === aRoot + 1 || f === aRoot + 2) cell.classList.add('a-zone');
+      // E shape zone: root-1 to root+3
+      if (f >= rootFret - 1 && f <= rootFret + 3) {
+        if (f === rootFret) cell.classList.add('e-zone-root');
+        else if (f === rootFret - 1) cell.classList.add('e-zone-left');
+        else cell.classList.add('e-zone');
+        if (f === rootFret + 3) cell.classList.add('e-zone-right');
+      }
+      // A shape zone: root-1 to root+3
+      if (f >= aRoot - 1 && f <= aRoot + 3) {
+        if (f === aRoot) cell.classList.add('a-zone-root');
+        else if (f === aRoot - 1) cell.classList.add('a-zone-left');
+        else cell.classList.add('a-zone');
+        if (f === aRoot + 3) cell.classList.add('a-zone-right');
+      }
       cell.dataset.key = key;
       cell.dataset.string = s;
       cell.dataset.fret = f;
@@ -767,10 +785,18 @@ function updateFretboard() {
     // update zone + selection styling
     const aRoot = aShapeRootFret();
     cell.className = cell.className.replace(/ selected| iv-\S+| e-zone\S*| a-zone\S*/g, '');
-    if (f === rootFret) cell.classList.add('e-zone-root');
-    else if (f === rootFret + 1 || f === rootFret + 2) cell.classList.add('e-zone');
-    if (f === aRoot) cell.classList.add('a-zone-root');
-    else if (f === aRoot + 1 || f === aRoot + 2) cell.classList.add('a-zone');
+    if (f >= rootFret - 1 && f <= rootFret + 3) {
+      if (f === rootFret) cell.classList.add('e-zone-root');
+      else if (f === rootFret - 1) cell.classList.add('e-zone-left');
+      else cell.classList.add('e-zone');
+      if (f === rootFret + 3) cell.classList.add('e-zone-right');
+    }
+    if (f >= aRoot - 1 && f <= aRoot + 3) {
+      if (f === aRoot) cell.classList.add('a-zone-root');
+      else if (f === aRoot - 1) cell.classList.add('a-zone-left');
+      else cell.classList.add('a-zone');
+      if (f === aRoot + 3) cell.classList.add('a-zone-right');
+    }
     if (selectedNotes.has(key)) {
       cell.classList.add('selected', ivClass(interval));
     }
