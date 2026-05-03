@@ -934,8 +934,12 @@ function updateAllUI() {
 
 function buildNotePool() {
   const notes = [];
+  // only use E-shape notes for generation (within E zone: rootFret-2 to rootFret+4)
+  const eMin = rootFret - 2;
+  const eMax = rootFret + 4;
   selectedNotes.forEach(key => {
     const [s, f] = key.split('-').map(Number);
+    if (f < eMin || f > eMax) return;
     const semi = semitoneFromRoot(s, f);
     const interval = intervalName(semi);
     notes.push({
