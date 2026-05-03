@@ -948,8 +948,8 @@ function buildNotePool() {
   });
   notes.sort((a, b) => a.semitone - b.semitone);
 
-  // jianpu octave dots: middle octave (semitones 0-11) = no dot
-  notes.forEach(n => { n.dots = Math.floor(n.semitone / 12); });
+  // jianpu octave dots: root on string 6 = one dot below, middle octave = semitones 12-23
+  notes.forEach(n => { n.dots = Math.floor(n.semitone / 12) - 1; });
 
   return notes;
 }
